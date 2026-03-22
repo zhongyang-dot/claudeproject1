@@ -471,7 +471,7 @@ async function fetchCryptoPrices() {
   }
 }
 
-// Fetch stock/commodity prices from Yahoo Finance (free, public)
+// Fetch stock/commodity prices from Yahoo Finance via CORS proxy
 async function fetchYahooPrices() {
   const symbols = ['GC=F', 'SI=F', 'CL=F', '^GSPC', 'NVDA', 'MSFT', 'PLTR', '^STI'];
   const slugMap = {
@@ -479,26 +479,35 @@ async function fetchYahooPrices() {
     '^GSPC': '.INX:INDEXSP', 'NVDA': 'NVDA:NASDAQ', 'MSFT': 'MSFT:NASDAQ',
     'PLTR': 'PLTR:NYSE', '^STI': 'STI:INDEXSG'
   };
-  try {
-    const resp = await fetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols.join(',')}`);
-    const json = await resp.json();
-    const out = {};
-    if (json.quoteResponse && json.quoteResponse.result) {
-      json.quoteResponse.result.forEach(q => {
-        const slug = slugMap[q.symbol];
-        if (slug) {
-          out[slug] = {
-            price: q.regularMarketPrice || 0,
-            change: q.regularMarketChangePercent || 0
-          };
-        }
-      });
+  const yahooUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols.join(',')}`;
+  const proxyUrls = [
+    `https://corsproxy.io/?url=${encodeURIComponent(yahooUrl)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`,
+    yahooUrl
+  ];
+  for (const url of proxyUrls) {
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) continue;
+      const json = await resp.json();
+      const out = {};
+      if (json.quoteResponse && json.quoteResponse.result) {
+        json.quoteResponse.result.forEach(q => {
+          const slug = slugMap[q.symbol];
+          if (slug) {
+            out[slug] = {
+              price: q.regularMarketPrice || 0,
+              change: q.regularMarketChangePercent || 0
+            };
+          }
+        });
+      }
+      if (Object.keys(out).length > 0) return out;
+    } catch (e) {
+      console.warn(`Yahoo fetch via ${url.substring(0, 40)}... failed:`, e);
     }
-    return out;
-  } catch (e) {
-    console.warn('Yahoo Finance fetch failed (CORS expected on static sites):', e);
-    return {};
   }
+  return {};
 }
 
 // Load all prices
@@ -751,24 +760,34 @@ loadChart('stocks');
   el.appendChild(s);
 })();
 
-// --- Smart Money: Fetch VIX, DXY, US10Y from Yahoo Finance ---
+// --- Smart Money: Fetch VIX, DXY, US10Y from Yahoo Finance via CORS proxy ---
 async function fetchSmartMoney() {
   const symbols = ['^VIX', '^TNX', 'DX-Y.NYB'];
   const elMap = { '^VIX': 'vixValue', '^TNX': 'us10yValue', 'DX-Y.NYB': 'dxyValue' };
-  try {
-    const resp = await fetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols.join(',')}`);
-    const json = await resp.json();
-    if (json.quoteResponse && json.quoteResponse.result) {
-      json.quoteResponse.result.forEach(q => {
-        const el = document.getElementById(elMap[q.symbol]);
-        if (el && q.regularMarketPrice != null) {
-          el.textContent = q.regularMarketPrice.toFixed(2);
-          el.style.color = q.regularMarketChangePercent >= 0 ? 'var(--green)' : 'var(--red)';
-        }
-      });
+  const yahooUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols.join(',')}`;
+  const proxyUrls = [
+    `https://corsproxy.io/?url=${encodeURIComponent(yahooUrl)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`,
+    yahooUrl
+  ];
+  for (const url of proxyUrls) {
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) continue;
+      const json = await resp.json();
+      if (json.quoteResponse && json.quoteResponse.result) {
+        json.quoteResponse.result.forEach(q => {
+          const el = document.getElementById(elMap[q.symbol]);
+          if (el && q.regularMarketPrice != null) {
+            el.textContent = q.regularMarketPrice.toFixed(2);
+            el.style.color = q.regularMarketChangePercent >= 0 ? 'var(--green)' : 'var(--red)';
+          }
+        });
+        return;
+      }
+    } catch (e) {
+      console.warn(`Smart money fetch via ${url.substring(0, 40)}... failed:`, e);
     }
-  } catch (e) {
-    console.warn('Smart money fetch failed (CORS expected):', e);
   }
 }
 fetchSmartMoney();
