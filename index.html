@@ -328,25 +328,25 @@
   <div class="section">
     <div class="section-title"><span class="dot dot-red"></span>Smart Money & Institutional Indicators</div>
     <div class="grid grid-2" id="smartMoneyCards">
-      <div class="price-card">
+      <div class="price-card" style="cursor:pointer" onclick="window.open('https://www.google.com/finance/quote/VIX:INDEXCBOE','_blank')">
         <div class="label">VIX — Fear Index</div>
         <div class="value" id="vixValue">—</div>
-        <div class="sub">Low = complacency, High = fear</div>
+        <div class="sub">Low = complacency, High = fear · <span style="color:var(--accent)">Google Finance →</span></div>
       </div>
-      <div class="price-card">
+      <div class="price-card" style="cursor:pointer" onclick="window.open('https://www.google.com/finance/quote/TNX:INDEXCBOE','_blank')">
         <div class="label">US 10Y Treasury Yield</div>
         <div class="value" id="us10yValue">—</div>
-        <div class="sub">Rising yield = risk-off rotation</div>
+        <div class="sub">Rising yield = risk-off rotation · <span style="color:var(--accent)">Google Finance →</span></div>
       </div>
-      <div class="price-card">
+      <div class="price-card" style="cursor:pointer" onclick="window.open('https://www.google.com/finance/quote/DX-Y.NYB:NYBOT','_blank')">
         <div class="label">DXY — US Dollar Index</div>
         <div class="value" id="dxyValue">—</div>
-        <div class="sub">Strong dollar = pressure on commodities</div>
+        <div class="sub">Strong dollar = pressure on commodities · <span style="color:var(--accent)">Google Finance →</span></div>
       </div>
-      <div class="price-card">
+      <div class="price-card" style="cursor:pointer" onclick="window.open('https://www.google.com/finance/quote/.INX:INDEXSP','_blank')">
         <div class="label">Put/Call Ratio (CBOE)</div>
         <div class="value" id="pcrValue">—</div>
-        <div class="sub">&gt;1 = bearish sentiment, &lt;0.7 = bullish</div>
+        <div class="sub">&gt;1 = bearish sentiment, &lt;0.7 = bullish · <span style="color:var(--accent)">Google Finance →</span></div>
       </div>
     </div>
     <div class="widget-container" id="heatmapWidget" style="height:420px; margin-top: 12px;"></div>
@@ -367,7 +367,7 @@
 </div>
 
 <div class="footer">
-  Investment Pulse — Data provided by TradingView. For informational purposes only, not financial advice.<br>
+  Investment Pulse — Prices via <a href="https://www.google.com/finance/" target="_blank" style="color:var(--accent);text-decoration:none;">Google Finance</a> &amp; CoinGecko. Charts by TradingView. For informational purposes only, not financial advice.<br>
   <span style="margin-top:4px;display:inline-block;">Add to Home Screen on your phone for app-like access.</span>
 </div>
 
@@ -409,50 +409,106 @@ document.getElementById('lastUpdate').textContent = 'Updated: ' + new Date().toL
   el.appendChild(script);
 })();
 
-// --- Price Cards ---
-function renderPriceCards() {
-  const cards = [
-    { label: 'Gold (XAU/USD)', symbol: 'FOREXCOM:XAUUSD', id: 'gold' },
-    { label: 'Silver (XAG/USD)', symbol: 'FOREXCOM:XAGUSD', id: 'silver' },
-    { label: 'Crude Oil (WTI)', symbol: 'NYMEX:CL1!', id: 'oil' },
-    { label: 'Bitcoin (BTC)', symbol: 'BITSTAMP:BTCUSD', id: 'btc' },
-    { label: 'USDC', symbol: 'COINBASE:USDCUSD', id: 'usdc' },
-    { label: 'S&P 500', symbol: 'SP:SPX', id: 'spx' },
-    { label: 'NVIDIA', symbol: 'NASDAQ:NVDA', id: 'nvda' },
-    { label: 'SGX STI', symbol: 'TVC:STI', id: 'sti' },
-    { label: 'US Dollar (DXY)', symbol: 'TVC:DXY', id: 'dxy' },
-  ];
+// --- Price Cards (Google Finance sourced) ---
+const priceAssets = [
+  { label: 'Gold (XAU/USD)', gfSlug: 'XAU-USD', cgId: null, type: 'commodity' },
+  { label: 'Silver (XAG/USD)', gfSlug: 'XAG-USD', cgId: null, type: 'commodity' },
+  { label: 'Crude Oil (WTI)', gfSlug: 'CL=F:NYMEX', cgId: null, type: 'commodity' },
+  { label: 'Bitcoin (BTC)', gfSlug: 'BTC-USD', cgId: 'bitcoin', type: 'crypto' },
+  { label: 'Ethereum (ETH)', gfSlug: 'ETH-USD', cgId: 'ethereum', type: 'crypto' },
+  { label: 'USDC', gfSlug: 'USDC-USD', cgId: 'usd-coin', type: 'crypto' },
+  { label: 'Solana (SOL)', gfSlug: 'SOL-USD', cgId: 'solana', type: 'crypto' },
+  { label: 'S&P 500', gfSlug: '.INX:INDEXSP', cgId: null, type: 'index' },
+  { label: 'NVIDIA', gfSlug: 'NVDA:NASDAQ', cgId: null, type: 'stock' },
+  { label: 'Microsoft', gfSlug: 'MSFT:NASDAQ', cgId: null, type: 'stock' },
+  { label: 'Palantir', gfSlug: 'PLTR:NYSE', cgId: null, type: 'stock' },
+  { label: 'SGX STI', gfSlug: 'STI:INDEXSG', cgId: null, type: 'index' },
+];
+
+function googleFinanceUrl(slug) {
+  return `https://www.google.com/finance/quote/${slug}`;
+}
+
+function renderPriceCards(data) {
   const container = document.getElementById('priceCards');
   container.innerHTML = '';
-  cards.forEach(c => {
+  priceAssets.forEach(asset => {
+    const d = data[asset.cgId] || data[asset.gfSlug] || null;
     const div = document.createElement('div');
     div.className = 'price-card';
-    div.innerHTML = `<div class="label">${c.label}</div>
-      <div class="tradingview-widget-container" style="height:60px;">
-        <div id="mini-${c.id}"></div>
-      </div>`;
+    div.style.cursor = 'pointer';
+    div.onclick = () => window.open(googleFinanceUrl(asset.gfSlug), '_blank');
+    if (d) {
+      const changeClass = d.change >= 0 ? 'up' : 'down';
+      const arrow = d.change >= 0 ? '▲' : '▼';
+      div.innerHTML = `<div class="label">${asset.label}</div>
+        <div class="value">$${d.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+        <div class="change ${changeClass}">${arrow} ${d.change >= 0 ? '+' : ''}${d.change.toFixed(2)}%</div>
+        <div class="sub">via Google Finance</div>`;
+    } else {
+      div.innerHTML = `<div class="label">${asset.label}</div>
+        <div class="value" style="font-size:14px;color:var(--accent);">View on Google Finance →</div>
+        <div class="sub">Click to see live price</div>`;
+    }
     container.appendChild(div);
-    // Mini chart widget
-    setTimeout(() => {
-      const s = document.createElement('script');
-      s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js';
-      s.async = true;
-      s.textContent = JSON.stringify({
-        symbol: c.symbol,
-        width: "100%",
-        height: "100%",
-        locale: "en",
-        dateRange: "1D",
-        colorTheme: "dark",
-        isTransparent: true,
-        autosize: true,
-        largeChartUrl: ""
-      });
-      document.getElementById(`mini-${c.id}`).appendChild(s);
-    }, 100);
   });
 }
-renderPriceCards();
+
+// Fetch crypto prices from CoinGecko (free, no CORS)
+async function fetchCryptoPrices() {
+  const ids = priceAssets.filter(a => a.cgId).map(a => a.cgId).join(',');
+  try {
+    const resp = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`);
+    const json = await resp.json();
+    const out = {};
+    for (const [id, val] of Object.entries(json)) {
+      out[id] = { price: val.usd, change: val.usd_24h_change || 0 };
+    }
+    return out;
+  } catch (e) {
+    console.warn('CoinGecko fetch failed:', e);
+    return {};
+  }
+}
+
+// Fetch stock/commodity prices from Yahoo Finance (free, public)
+async function fetchYahooPrices() {
+  const symbols = ['GC=F', 'SI=F', 'CL=F', '^GSPC', 'NVDA', 'MSFT', 'PLTR', '^STI'];
+  const slugMap = {
+    'GC=F': 'XAU-USD', 'SI=F': 'XAG-USD', 'CL=F': 'CL=F:NYMEX',
+    '^GSPC': '.INX:INDEXSP', 'NVDA': 'NVDA:NASDAQ', 'MSFT': 'MSFT:NASDAQ',
+    'PLTR': 'PLTR:NYSE', '^STI': 'STI:INDEXSG'
+  };
+  try {
+    const resp = await fetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols.join(',')}`);
+    const json = await resp.json();
+    const out = {};
+    if (json.quoteResponse && json.quoteResponse.result) {
+      json.quoteResponse.result.forEach(q => {
+        const slug = slugMap[q.symbol];
+        if (slug) {
+          out[slug] = {
+            price: q.regularMarketPrice || 0,
+            change: q.regularMarketChangePercent || 0
+          };
+        }
+      });
+    }
+    return out;
+  } catch (e) {
+    console.warn('Yahoo Finance fetch failed (CORS expected on static sites):', e);
+    return {};
+  }
+}
+
+// Load all prices
+async function loadAllPrices() {
+  const [crypto, stocks] = await Promise.all([fetchCryptoPrices(), fetchYahooPrices()]);
+  renderPriceCards({ ...crypto, ...stocks });
+}
+loadAllPrices();
+// Auto-refresh every 2 minutes
+setInterval(loadAllPrices, 120000);
 
 // --- Main Chart (Tabbed) ---
 const chartConfigs = {
@@ -694,6 +750,28 @@ loadChart('stocks');
   });
   el.appendChild(s);
 })();
+
+// --- Smart Money: Fetch VIX, DXY, US10Y from Yahoo Finance ---
+async function fetchSmartMoney() {
+  const symbols = ['^VIX', '^TNX', 'DX-Y.NYB'];
+  const elMap = { '^VIX': 'vixValue', '^TNX': 'us10yValue', 'DX-Y.NYB': 'dxyValue' };
+  try {
+    const resp = await fetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols.join(',')}`);
+    const json = await resp.json();
+    if (json.quoteResponse && json.quoteResponse.result) {
+      json.quoteResponse.result.forEach(q => {
+        const el = document.getElementById(elMap[q.symbol]);
+        if (el && q.regularMarketPrice != null) {
+          el.textContent = q.regularMarketPrice.toFixed(2);
+          el.style.color = q.regularMarketChangePercent >= 0 ? 'var(--green)' : 'var(--red)';
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('Smart money fetch failed (CORS expected):', e);
+  }
+}
+fetchSmartMoney();
 
 // --- PWA: Add to Home Screen ---
 let deferredPrompt;
