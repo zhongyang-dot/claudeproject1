@@ -391,7 +391,7 @@ document.getElementById('lastUpdate').textContent = 'Updated: ' + new Date().toL
       { proName: "FOREXCOM:XAGUSD", title: "Silver" },
       { proName: "NYMEX:CL1!", title: "Crude Oil" },
       { proName: "BITSTAMP:BTCUSD", title: "Bitcoin" },
-      { proName: "COINBASE:USDCUSD", title: "USDC" },
+      { proName: "CRYPTO:USDCUSD", title: "USDC" },
       { proName: "NASDAQ:NVDA", title: "NVIDIA" },
       { proName: "NASDAQ:MSFT", title: "Microsoft" },
       { proName: "NYSE:CRCL", title: "Circle (IPO)" },
@@ -526,15 +526,15 @@ const chartConfigs = {
     title: "US Stock Indices"
   },
   crypto: {
-    symbols: [["Bitcoin", "BITSTAMP:BTCUSD|1D"], ["Ethereum", "BITSTAMP:ETHUSD|1D"], ["USDC/USD", "COINBASE:USDCUSD|1D"]],
+    symbols: [["Bitcoin", "BITSTAMP:BTCUSD|1D"], ["Ethereum", "BITSTAMP:ETHUSD|1D"], ["USDC/USD", "CRYPTO:USDCUSD|1D"]],
     title: "Cryptocurrency"
   },
   commodities: {
-    symbols: [["Gold", "FOREXCOM:XAUUSD|1D"], ["Silver", "FOREXCOM:XAGUSD|1D"], ["Crude Oil", "NYMEX:CL1!|1D"]],
+    symbols: [["Gold", "TVC:GOLD|1D"], ["Silver", "TVC:SILVER|1D"], ["Crude Oil", "TVC:USOIL|1D"]],
     title: "Commodities"
   },
   singapore: {
-    symbols: [["Straits Times", "TVC:STI|1D"], ["SGD/USD", "FX_IDC:SGDUSD|1D"]],
+    symbols: [["Straits Times", "SGX:STI|1D"], ["SGD/USD", "FX:SGDUSD|1D"]],
     title: "Singapore"
   }
 };
@@ -660,7 +660,7 @@ loadChart('stocks');
       symbols: [
         { name: "BITSTAMP:BTCUSD", displayName: "Bitcoin" },
         { name: "BITSTAMP:ETHUSD", displayName: "Ethereum" },
-        { name: "COINBASE:USDCUSD", displayName: "USDC" },
+        { name: "CRYPTO:USDCUSD", displayName: "USDC" },
         { name: "BINANCE:SOLUSDT", displayName: "Solana" },
         { name: "COINBASE:XRPUSD", displayName: "XRP" },
         { name: "BINANCE:AVAXUSDT", displayName: "Avalanche" }
@@ -682,7 +682,7 @@ loadChart('stocks');
   s.async = true;
   s.textContent = JSON.stringify({
     autosize: true,
-    symbol: "TVC:STI",
+    symbol: "SGX:STI",
     interval: "D",
     timezone: "Asia/Singapore",
     theme: "dark",
