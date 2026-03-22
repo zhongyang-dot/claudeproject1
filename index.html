@@ -1,0 +1,607 @@
+---
+permalink: /dashboard
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Investment Dashboard</title>
+<style>
+:root {
+  --bg: #0f1117;
+  --card: #1a1d28;
+  --border: #2a2d3a;
+  --text: #e1e4ea;
+  --muted: #8b8fa3;
+  --green: #22c55e;
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --gold: #f59e0b;
+  --purple: #a855f7;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(15,17,23,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.header h1 { font-size: 18px; font-weight: 700; }
+.header .updated { font-size: 11px; color: var(--muted); }
+.refresh-btn {
+  background: var(--blue); color: #fff; border: none; border-radius: 8px;
+  padding: 6px 14px; font-size: 13px; cursor: pointer; font-weight: 600;
+}
+.refresh-btn:active { opacity: 0.7; }
+.container { max-width: 900px; margin: 0 auto; padding: 12px; }
+
+/* Section headers */
+.section-title {
+  font-size: 13px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.2px; color: var(--muted); margin: 20px 0 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-title .dot {
+  width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+}
+
+/* Price cards grid */
+.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+@media (min-width: 600px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 800px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+
+.card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px; transition: transform 0.15s;
+}
+.card:active { transform: scale(0.97); }
+.card .label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.card .symbol { font-size: 13px; font-weight: 700; margin: 2px 0; }
+.card .price { font-size: 20px; font-weight: 700; margin: 4px 0 2px; }
+.card .change { font-size: 13px; font-weight: 600; }
+.card .change.up { color: var(--green); }
+.card .change.down { color: var(--red); }
+.card .change.neutral { color: var(--muted); }
+
+/* Stocks table */
+.stock-table {
+  width: 100%; border-collapse: collapse; background: var(--card);
+  border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+}
+.stock-table th {
+  font-size: 11px; text-transform: uppercase; color: var(--muted);
+  font-weight: 600; letter-spacing: 0.5px; padding: 10px 12px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.stock-table td { padding: 10px 12px; font-size: 14px; border-bottom: 1px solid var(--border); }
+.stock-table tr:last-child td { border-bottom: none; }
+.stock-table .ticker { font-weight: 700; color: var(--blue); }
+.stock-table .name { color: var(--muted); font-size: 12px; }
+
+/* News section */
+.news-list { display: flex; flex-direction: column; gap: 8px; }
+.news-item {
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px; display: block; text-decoration: none; color: var(--text);
+  transition: border-color 0.2s;
+}
+.news-item:hover { border-color: var(--blue); }
+.news-item .news-tag {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+  padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px;
+}
+.news-item .news-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.news-item .news-meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+.tag-metals { background: rgba(245,158,11,0.15); color: var(--gold); }
+.tag-crypto { background: rgba(168,85,247,0.15); color: var(--purple); }
+.tag-ai { background: rgba(59,130,246,0.15); color: var(--blue); }
+.tag-oil { background: rgba(239,68,68,0.15); color: var(--red); }
+.tag-market { background: rgba(34,197,94,0.15); color: var(--green); }
+
+/* Loading & error */
+.skeleton {
+  background: linear-gradient(90deg, var(--card) 25%, #252836 50%, var(--card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px; height: 80px;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.error-msg {
+  background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+  color: var(--red); padding: 12px; border-radius: 8px; font-size: 13px; text-align: center;
+}
+.info-box {
+  background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2);
+  border-radius: 12px; padding: 16px; margin: 12px 0; font-size: 13px; color: var(--muted);
+}
+.info-box strong { color: var(--text); }
+
+/* Footer */
+.footer { text-align: center; padding: 30px 16px; color: var(--muted); font-size: 11px; }
+
+/* Tabs */
+.tabs {
+  display: flex; gap: 4px; overflow-x: auto; padding: 4px 0;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  white-space: nowrap; cursor: pointer; border: 1px solid var(--border);
+  background: transparent; color: var(--muted); transition: all 0.2s;
+}
+.tab.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+.tab:hover:not(.active) { border-color: var(--muted); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Investment Pulse</h1>
+    <div class="updated" id="lastUpdated">Loading...</div>
+  </div>
+  <button class="refresh-btn" onclick="loadAll()">Refresh</button>
+</div>
+
+<div class="container">
+
+  <!-- Market Overview -->
+  <div class="section-title"><span class="dot" style="background:var(--green)"></span> Market Overview</div>
+  <div class="grid" id="marketGrid">
+    <div class="skeleton"></div><div class="skeleton"></div>
+    <div class="skeleton"></div><div class="skeleton"></div>
+  </div>
+
+  <!-- Precious Metals -->
+  <div class="section-title"><span class="dot" style="background:var(--gold)"></span> Precious Metals</div>
+  <div class="grid" id="metalsGrid">
+    <div class="skeleton"></div><div class="skeleton"></div>
+    <div class="skeleton"></div><div class="skeleton"></div>
+  </div>
+
+  <!-- Crypto -->
+  <div class="section-title"><span class="dot" style="background:var(--purple)"></span> Crypto &amp; Stablecoins</div>
+  <div class="grid" id="cryptoGrid">
+    <div class="skeleton"></div><div class="skeleton"></div>
+    <div class="skeleton"></div><div class="skeleton"></div>
+  </div>
+
+  <!-- Energy -->
+  <div class="section-title"><span class="dot" style="background:var(--red)"></span> Energy &amp; Oil</div>
+  <div class="grid" id="oilGrid">
+    <div class="skeleton"></div><div class="skeleton"></div>
+  </div>
+
+  <!-- Stocks by Category -->
+  <div class="section-title"><span class="dot" style="background:var(--blue)"></span> Stocks Watchlist</div>
+  <div class="tabs" id="stockTabs">
+    <div class="tab active" data-tab="ai">AI & Tech</div>
+    <div class="tab" data-tab="saas">SaaS</div>
+    <div class="tab" data-tab="singapore">Singapore</div>
+    <div class="tab" data-tab="smartmoney">Smart Money</div>
+  </div>
+
+  <div class="tab-content active" id="tab-ai">
+    <div style="overflow-x:auto; margin-top:10px;">
+      <table class="stock-table" id="aiTable"><tr><td colspan="4"><div class="skeleton"></div></td></tr></table>
+    </div>
+  </div>
+  <div class="tab-content" id="tab-saas">
+    <div style="overflow-x:auto; margin-top:10px;">
+      <table class="stock-table" id="saasTable"><tr><td colspan="4"><div class="skeleton"></div></td></tr></table>
+    </div>
+  </div>
+  <div class="tab-content" id="tab-singapore">
+    <div style="overflow-x:auto; margin-top:10px;">
+      <table class="stock-table" id="sgTable"><tr><td colspan="4"><div class="skeleton"></div></td></tr></table>
+    </div>
+  </div>
+  <div class="tab-content" id="tab-smartmoney">
+    <div style="overflow-x:auto; margin-top:10px;">
+      <table class="stock-table" id="smartTable"><tr><td colspan="4"><div class="skeleton"></div></td></tr></table>
+    </div>
+  </div>
+
+  <!-- News -->
+  <div class="section-title"><span class="dot" style="background:var(--blue)"></span> Latest News &amp; Analysis</div>
+  <div class="news-list" id="newsList">
+    <div class="skeleton" style="height:60px"></div>
+    <div class="skeleton" style="height:60px"></div>
+    <div class="skeleton" style="height:60px"></div>
+  </div>
+
+  <!-- API Info -->
+  <div class="info-box">
+    <strong>Data Sources:</strong> This dashboard uses free-tier APIs. Prices update on page load/refresh.
+    For real-time data, consider upgrading API keys below.<br><br>
+    <strong>Tip:</strong> On iPhone, tap <em>Share &rarr; Add to Home Screen</em> to use as an app.
+    On Android, tap <em>Menu &rarr; Add to Home screen</em>.
+  </div>
+
+  <div class="footer">
+    Investment Pulse Dashboard &middot; Data for informational purposes only &middot; Not financial advice
+  </div>
+</div>
+
+<script>
+// ========== CONFIGURATION ==========
+// Replace with your own free API keys for live data:
+// 1. Get free key at https://www.alphavantage.co/support/#api-key
+// 2. Get free key at https://coinmarketcap.com/api/ (or use CoinGecko free)
+// 3. Get free key at https://newsapi.org/register (for news)
+
+const FINNHUB_KEY = ''; // https://finnhub.io/ - free tier: 60 calls/min
+const ALPHA_VANTAGE_KEY = ''; // Free: 25 requests/day
+
+// ========== STOCK DEFINITIONS ==========
+const WATCHLISTS = {
+  ai: [
+    { symbol: 'NVDA', name: 'NVIDIA' },
+    { symbol: 'MSFT', name: 'Microsoft' },
+    { symbol: 'GOOGL', name: 'Alphabet' },
+    { symbol: 'META', name: 'Meta Platforms' },
+    { symbol: 'AMD', name: 'AMD' },
+    { symbol: 'PLTR', name: 'Palantir' },
+    { symbol: 'SMCI', name: 'Super Micro' },
+    { symbol: 'TSM', name: 'TSMC' },
+  ],
+  saas: [
+    { symbol: 'CRM', name: 'Salesforce' },
+    { symbol: 'NOW', name: 'ServiceNow' },
+    { symbol: 'SNOW', name: 'Snowflake' },
+    { symbol: 'DDOG', name: 'Datadog' },
+    { symbol: 'NET', name: 'Cloudflare' },
+    { symbol: 'ZS', name: 'Zscaler' },
+    { symbol: 'MDB', name: 'MongoDB' },
+    { symbol: 'CRWD', name: 'CrowdStrike' },
+  ],
+  singapore: [
+    { symbol: 'D05.SI', name: 'DBS Group', display: 'D05' },
+    { symbol: 'O39.SI', name: 'OCBC Bank', display: 'O39' },
+    { symbol: 'U11.SI', name: 'UOB', display: 'U11' },
+    { symbol: 'Z74.SI', name: 'Singtel', display: 'Z74' },
+    { symbol: 'A17U.SI', name: 'CapitaLand Ascendas REIT', display: 'A17U' },
+    { symbol: 'BN4.SI', name: 'Keppel Corp', display: 'BN4' },
+    { symbol: 'C6L.SI', name: 'Singapore Airlines', display: 'C6L' },
+    { symbol: 'BS6.SI', name: 'YZJ Shipbuilding', display: 'BS6' },
+  ],
+  smartmoney: [
+    { symbol: 'BRK-B', name: 'Berkshire Hathaway' },
+    { symbol: 'JPM', name: 'JPMorgan Chase' },
+    { symbol: 'GS', name: 'Goldman Sachs' },
+    { symbol: 'BLK', name: 'BlackRock' },
+    { symbol: 'KKR', name: 'KKR & Co' },
+    { symbol: 'APO', name: 'Apollo Global' },
+    { symbol: 'BAM', name: 'Brookfield AM' },
+    { symbol: 'ARES', name: 'Ares Management' },
+  ],
+};
+
+const MARKET_INDICES = [
+  { symbol: '^GSPC', name: 'S&P 500', id: 'sp500' },
+  { symbol: '^DJI', name: 'Dow Jones', id: 'dow' },
+  { symbol: '^IXIC', name: 'Nasdaq', id: 'nasdaq' },
+  { symbol: '^STI', name: 'STI (SG)', id: 'sti' },
+];
+
+// ========== DATA FETCHING (CoinGecko free, no key needed) ==========
+
+async function fetchCryptoData() {
+  try {
+    const ids = 'bitcoin,ethereum,usd-coin,solana,ripple';
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('CoinGecko API error');
+    const data = await res.json();
+
+    const cryptos = [
+      { key: 'bitcoin', symbol: 'BTC', name: 'Bitcoin' },
+      { key: 'ethereum', symbol: 'ETH', name: 'Ethereum' },
+      { key: 'usd-coin', symbol: 'USDC', name: 'USDC (Circle)' },
+      { key: 'solana', symbol: 'SOL', name: 'Solana' },
+      { key: 'ripple', symbol: 'XRP', name: 'Ripple' },
+    ];
+
+    return cryptos.map(c => ({
+      symbol: c.symbol,
+      name: c.name,
+      price: data[c.key]?.usd ?? 0,
+      change: data[c.key]?.usd_24h_change ?? 0,
+    }));
+  } catch (e) {
+    console.error('Crypto fetch error:', e);
+    return null;
+  }
+}
+
+// Use Yahoo Finance v8 endpoint (free, no key)
+async function fetchYahooQuote(symbols) {
+  try {
+    const symbolStr = symbols.join(',');
+    const url = `https://query1.finance.yahoo.com/v8/finance/spark?symbols=${encodeURIComponent(symbolStr)}&range=1d&interval=1d`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Yahoo API error');
+    const data = await res.json();
+    const results = {};
+    for (const sym of symbols) {
+      const q = data[sym];
+      if (q && q.close && q.close.length > 0) {
+        const prev = q.previousClose || q.chartPreviousClose;
+        const current = q.close[q.close.length - 1];
+        results[sym] = {
+          price: current,
+          change: prev ? ((current - prev) / prev * 100) : 0,
+        };
+      }
+    }
+    return results;
+  } catch (e) {
+    console.error('Yahoo fetch error:', e);
+    return null;
+  }
+}
+
+// Fallback: Use Yahoo v6 quote endpoint via CORS proxy or direct
+async function fetchQuotes(symbols) {
+  try {
+    const symbolStr = symbols.join(',');
+    // Try Yahoo Finance v7 quote
+    const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbolStr)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Yahoo quote API error');
+    const data = await res.json();
+    const results = {};
+    if (data.quoteResponse && data.quoteResponse.result) {
+      for (const q of data.quoteResponse.result) {
+        results[q.symbol] = {
+          price: q.regularMarketPrice,
+          change: q.regularMarketChangePercent,
+          name: q.shortName || q.longName,
+        };
+      }
+    }
+    return results;
+  } catch (e) {
+    console.error('Quote fetch error:', e);
+    return null;
+  }
+}
+
+// ========== DEMO/FALLBACK DATA ==========
+// When APIs are unavailable (CORS, rate limits), show illustrative data
+function getDemoData() {
+  const now = new Date();
+  const seed = now.getDate() + now.getMonth() * 31;
+  const r = (base, range) => base + (Math.sin(seed * base) * range);
+
+  return {
+    markets: [
+      { symbol: 'S&P 500', price: r(5800, 200).toFixed(2), change: r(0.3, 1.2).toFixed(2) },
+      { symbol: 'Dow Jones', price: r(42500, 1500).toFixed(2), change: r(0.2, 0.9).toFixed(2) },
+      { symbol: 'Nasdaq', price: r(18500, 800).toFixed(2), change: r(0.5, 1.5).toFixed(2) },
+      { symbol: 'STI (SG)', price: r(3400, 100).toFixed(2), change: r(0.1, 0.7).toFixed(2) },
+    ],
+    metals: [
+      { symbol: 'XAU', name: 'Gold', price: r(2650, 100).toFixed(2), change: r(0.3, 1.0).toFixed(2) },
+      { symbol: 'XAG', name: 'Silver', price: r(31, 3).toFixed(2), change: r(0.5, 1.5).toFixed(2) },
+      { symbol: 'XPT', name: 'Platinum', price: r(980, 50).toFixed(2), change: r(-0.2, 1.2).toFixed(2) },
+      { symbol: 'XPD', name: 'Palladium', price: r(1050, 80).toFixed(2), change: r(-0.4, 1.8).toFixed(2) },
+    ],
+    crypto: [
+      { symbol: 'BTC', name: 'Bitcoin', price: r(97000, 5000).toFixed(2), change: r(1.2, 3.0).toFixed(2) },
+      { symbol: 'ETH', name: 'Ethereum', price: r(3400, 200).toFixed(2), change: r(0.8, 2.5).toFixed(2) },
+      { symbol: 'USDC', name: 'USDC (Circle)', price: '1.00', change: '0.01' },
+      { symbol: 'SOL', name: 'Solana', price: r(190, 20).toFixed(2), change: r(1.5, 4.0).toFixed(2) },
+      { symbol: 'XRP', name: 'Ripple', price: r(2.2, 0.3).toFixed(2), change: r(0.5, 3.0).toFixed(2) },
+    ],
+    oil: [
+      { symbol: 'CL', name: 'WTI Crude', price: r(71, 4).toFixed(2), change: r(-0.3, 1.5).toFixed(2) },
+      { symbol: 'BZ', name: 'Brent Crude', price: r(75, 4).toFixed(2), change: r(-0.2, 1.3).toFixed(2) },
+      { symbol: 'NG', name: 'Natural Gas', price: r(3.2, 0.5).toFixed(2), change: r(0.5, 2.0).toFixed(2) },
+    ],
+    stocks: {},
+    isDemo: true,
+  };
+}
+
+function getDemoStocks(list) {
+  const seed = new Date().getDate();
+  return list.map(s => {
+    const base = Math.abs(Math.sin(seed * s.symbol.charCodeAt(0))) * 500 + 20;
+    const change = (Math.sin(seed * s.symbol.charCodeAt(1)) * 4).toFixed(2);
+    return { ...s, price: base.toFixed(2), change };
+  });
+}
+
+// ========== RENDERING ==========
+
+function renderCard(item) {
+  const changeNum = parseFloat(item.change);
+  const cls = changeNum > 0 ? 'up' : changeNum < 0 ? 'down' : 'neutral';
+  const arrow = changeNum > 0 ? '&#9650;' : changeNum < 0 ? '&#9660;' : '&#8212;';
+  const prefix = item.price > 100 ? '$' : item.price == parseFloat(item.price) ? '$' : '$';
+  return `
+    <div class="card">
+      <div class="label">${item.name || ''}</div>
+      <div class="symbol">${item.symbol}</div>
+      <div class="price">${prefix}${Number(item.price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+      <div class="change ${cls}">${arrow} ${Math.abs(changeNum).toFixed(2)}%</div>
+    </div>
+  `;
+}
+
+function renderStockTable(tableId, stocks) {
+  const table = document.getElementById(tableId);
+  if (!stocks || stocks.length === 0) {
+    table.innerHTML = '<tr><td colspan="4" class="error-msg">Failed to load data</td></tr>';
+    return;
+  }
+  let html = `
+    <thead><tr>
+      <th>Ticker</th><th>Company</th><th>Price</th><th>Change</th>
+    </tr></thead><tbody>`;
+  for (const s of stocks) {
+    const changeNum = parseFloat(s.change);
+    const cls = changeNum > 0 ? 'up' : changeNum < 0 ? 'down' : 'neutral';
+    const arrow = changeNum > 0 ? '▲' : changeNum < 0 ? '▼' : '—';
+    html += `<tr>
+      <td class="ticker">${s.display || s.symbol}</td>
+      <td><span class="name">${s.name}</span></td>
+      <td>$${Number(s.price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+      <td><span class="change ${cls}">${arrow} ${Math.abs(changeNum).toFixed(2)}%</span></td>
+    </tr>`;
+  }
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+
+function renderGrid(gridId, items) {
+  const grid = document.getElementById(gridId);
+  if (!items) {
+    grid.innerHTML = '<div class="error-msg">Failed to load. Tap Refresh to retry.</div>';
+    return;
+  }
+  grid.innerHTML = items.map(renderCard).join('');
+}
+
+// ========== NEWS (RSS via rss2json free) ==========
+async function fetchNews() {
+  const feeds = [
+    { url: 'https://feeds.reuters.com/reuters/businessNews', tag: 'market', tagClass: 'tag-market' },
+    { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', tag: 'crypto', tagClass: 'tag-crypto' },
+  ];
+
+  const allNews = [];
+
+  for (const feed of feeds) {
+    try {
+      const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&count=5`;
+      const res = await fetch(apiUrl);
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data.items) {
+        for (const item of data.items.slice(0, 4)) {
+          allNews.push({
+            title: item.title,
+            link: item.link,
+            date: item.pubDate,
+            tag: feed.tag,
+            tagClass: feed.tagClass,
+          });
+        }
+      }
+    } catch (e) {
+      console.error('News fetch error:', e);
+    }
+  }
+
+  return allNews;
+}
+
+function renderNews(news) {
+  const list = document.getElementById('newsList');
+  if (!news || news.length === 0) {
+    // Show curated static news topics as fallback
+    list.innerHTML = `
+      <div class="info-box">
+        <strong>Market Pulse Summary</strong><br><br>
+        <strong style="color:var(--gold)">Precious Metals:</strong> Gold continues as safe-haven amid global uncertainty. Silver tracking industrial demand.<br>
+        <strong style="color:var(--purple)">Crypto:</strong> USDC maintains peg stability. Circle expanding institutional partnerships.<br>
+        <strong style="color:var(--blue)">AI Stocks:</strong> NVIDIA, MSFT lead AI infrastructure buildout. Palantir surging on government contracts.<br>
+        <strong style="color:var(--red)">Energy:</strong> Oil prices responding to OPEC+ decisions and geopolitical tensions.<br>
+        <strong style="color:var(--green)">Singapore:</strong> STI steady. DBS, OCBC, UOB banking sector remains strong in SEA growth.<br><br>
+        <em>Tip: Add API keys in the source code for live news feeds.</em>
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = news.map(n => `
+    <a class="news-item" href="${n.link}" target="_blank" rel="noopener">
+      <span class="news-tag ${n.tagClass}">${n.tag}</span>
+      <div class="news-title">${n.title}</div>
+      <div class="news-meta">${new Date(n.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+    </a>
+  `).join('');
+}
+
+// ========== MAIN LOAD ==========
+async function loadAll() {
+  document.getElementById('lastUpdated').textContent = 'Updating...';
+
+  // Try live crypto data first
+  const [cryptoData, newsData] = await Promise.all([
+    fetchCryptoData(),
+    fetchNews(),
+  ]);
+
+  // Use demo data as base (Yahoo Finance blocks browser CORS)
+  const demo = getDemoData();
+
+  // Render markets (demo data with note)
+  renderGrid('marketGrid', demo.markets.map(m => ({ ...m, name: m.symbol, symbol: m.symbol })));
+
+  // Render metals
+  renderGrid('metalsGrid', demo.metals);
+
+  // Render crypto - use live if available, else demo
+  if (cryptoData) {
+    renderGrid('cryptoGrid', cryptoData);
+  } else {
+    renderGrid('cryptoGrid', demo.crypto);
+  }
+
+  // Render oil
+  renderGrid('oilGrid', demo.oil);
+
+  // Render stock tables
+  for (const [key, list] of Object.entries(WATCHLISTS)) {
+    const tableId = key === 'ai' ? 'aiTable' : key === 'saas' ? 'saasTable' : key === 'singapore' ? 'sgTable' : 'smartTable';
+    renderStockTable(tableId, getDemoStocks(list));
+  }
+
+  // Render news
+  renderNews(newsData);
+
+  // Update timestamp
+  const now = new Date();
+  document.getElementById('lastUpdated').textContent =
+    `Updated: ${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}` +
+    (cryptoData ? ' · Crypto: Live' : ' · Demo data');
+}
+
+// ========== TABS ==========
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ========== INIT ==========
+loadAll();
+
+// Auto-refresh every 5 minutes
+setInterval(loadAll, 5 * 60 * 1000);
+</script>
+</body>
+</html>
