@@ -3,810 +3,346 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Investment Pulse — Market Dashboard</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+<title>Smart Money Tracker</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏦</text></svg>">
 <style>
-  :root {
-    --bg: #0f1117;
-    --surface: #1a1d28;
-    --card: #222536;
-    --border: #2d3148;
-    --text: #e4e6f0;
-    --muted: #8a8fa8;
-    --accent: #4f8cff;
-    --green: #22c55e;
-    --red: #ef4444;
-    --gold: #f59e0b;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-  }
+:root {
+  --bg: #0f1117; --surface: #1a1d28; --card: #222536;
+  --border: #2d3148; --text: #e4e6f0; --muted: #8a8fa8;
+  --accent: #4f8cff; --green: #22c55e; --red: #ef4444; --gold: #f59e0b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
 
-  /* Header */
-  .header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 20px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    backdrop-filter: blur(12px);
-  }
-  .header-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .logo { font-size: 18px; font-weight: 700; color: var(--accent); }
-  .logo span { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 8px; }
-  .updated { font-size: 12px; color: var(--muted); }
-  .refresh-btn {
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: var(--accent);
-    padding: 6px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-  }
-  .refresh-btn:hover { background: var(--border); }
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px; position: sticky; top: 0; z-index: 100; }
+.header-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+.logo { font-size: 17px; font-weight: 700; color: var(--accent); }
+.logo span { color: var(--muted); font-weight: 400; font-size: 12px; margin-left: 8px; }
+.updated { font-size: 12px; color: var(--muted); }
 
-  /* Layout */
-  .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+.container { max-width: 1100px; margin: 0 auto; padding: 14px 16px; }
 
-  /* Ticker tape at top */
-  .ticker-section { margin-bottom: 16px; border-radius: 10px; overflow: hidden; }
+.section { margin-bottom: 18px; }
+.section-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.dot-gold { background: var(--gold); } .dot-blue { background: var(--accent); } .dot-green { background: var(--green); } .dot-red { background: var(--red); }
 
-  /* Section */
-  .section {
-    margin-bottom: 20px;
-  }
-  .section-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 10px;
-    padding-left: 4px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .section-title .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    display: inline-block;
-  }
-  .dot-gold { background: var(--gold); }
-  .dot-blue { background: var(--accent); }
-  .dot-green { background: var(--green); }
-  .dot-red { background: var(--red); }
+.grid-2 { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+.grid-3 { display: grid; gap: 10px; grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 640px) { .grid-2, .grid-3 { grid-template-columns: 1fr 1fr; } }
 
-  /* Cards grid */
-  .grid {
-    display: grid;
-    gap: 12px;
-    grid-template-columns: 1fr;
-  }
-  @media (min-width: 640px) {
-    .grid-2 { grid-template-columns: 1fr 1fr; }
-    .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
-  }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: border-color .2s; }
+.card:hover { border-color: var(--accent); }
+.card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+.card .value { font-size: 20px; font-weight: 700; }
+.card .change { font-size: 12px; font-weight: 600; margin-top: 2px; }
+.card .sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.up { color: var(--green); } .down { color: var(--red); }
 
-  /* Price card */
-  .price-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-    transition: border-color 0.2s;
-  }
-  .price-card:hover { border-color: var(--accent); }
-  .price-card .label {
-    font-size: 12px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 4px;
-  }
-  .price-card .value {
-    font-size: 22px;
-    font-weight: 700;
-  }
-  .price-card .change {
-    font-size: 13px;
-    font-weight: 600;
-    margin-top: 2px;
-  }
-  .change.up { color: var(--green); }
-  .change.down { color: var(--red); }
-  .price-card .sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+/* ETF flow table */
+.flow-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.flow-table th { text-align: left; padding: 7px 10px; color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+.flow-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.flow-table tr:last-child td { border-bottom: none; }
+.flow-table tr:hover td { background: var(--surface); }
+.badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+.badge-in  { background: #22c55e22; color: var(--green); }
+.badge-out { background: #ef444422; color: var(--red); }
+.badge-flat{ background: #8a8fa822; color: var(--muted); }
+.flow-bar { height: 4px; border-radius: 2px; background: var(--border); margin-top: 4px; }
+.flow-bar-fill { height: 100%; border-radius: 2px; transition: width .5s; }
 
-  /* Widget container */
-  .widget-container {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-    min-height: 300px;
-  }
-  .widget-container iframe {
-    width: 100%;
-    border: none;
-  }
+.widget { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
 
-  /* News card */
-  .news-list { display: flex; flex-direction: column; gap: 8px; }
-  .news-item {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    text-decoration: none;
-    color: var(--text);
-    transition: border-color 0.2s;
-  }
-  .news-item:hover { border-color: var(--accent); }
-  .news-tag {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    padding: 3px 8px;
-    border-radius: 4px;
-    white-space: nowrap;
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-  .tag-metal { background: #f59e0b22; color: var(--gold); }
-  .tag-crypto { background: #4f8cff22; color: var(--accent); }
-  .tag-ai { background: #22c55e22; color: var(--green); }
-  .tag-oil { background: #ef444422; color: var(--red); }
-  .tag-saas { background: #a855f722; color: #a855f7; }
-  .tag-market { background: #64748b22; color: #94a3b8; }
-  .tag-sg { background: #f472b622; color: #f472b6; }
-  .tag-smart { background: #06b6d422; color: #06b6d4; }
-  .news-title { font-size: 14px; font-weight: 500; }
-  .news-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.footer { text-align: center; padding: 18px; color: var(--muted); font-size: 11px; border-top: 1px solid var(--border); margin-top: 8px; }
 
-  /* Tabs */
-  .tabs {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 12px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 4px;
-  }
-  .tab {
-    padding: 7px 14px;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: var(--muted);
-    white-space: nowrap;
-    transition: all 0.2s;
-  }
-  .tab.active {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
-  }
-  .tab:hover:not(.active) { border-color: var(--accent); color: var(--text); }
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
-
-  /* Loading */
-  .loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-    color: var(--muted);
-    font-size: 14px;
-  }
-  .spinner {
-    width: 20px; height: 20px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin-right: 10px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* Footer */
-  .footer {
-    text-align: center;
-    padding: 20px;
-    color: var(--muted);
-    font-size: 12px;
-    border-top: 1px solid var(--border);
-    margin-top: 20px;
-  }
-
-  /* PWA install banner */
-  .install-banner {
-    display: none;
-    background: var(--accent);
-    color: #fff;
-    text-align: center;
-    padding: 10px 16px;
-    font-size: 13px;
-    cursor: pointer;
-  }
-  .install-banner.show { display: block; }
-
-  /* Responsive TradingView widgets */
-  .tradingview-widget-container { width: 100% !important; }
+/* Fear & Greed gauge */
+.fg-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 0 4px; gap: 4px; }
+.fg-score { font-size: 32px; font-weight: 800; }
+.fg-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.fg-bar { width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(to right, var(--red), var(--gold), var(--green)); position: relative; margin-top: 6px; }
+.fg-needle { position: absolute; top: -4px; width: 2px; height: 14px; background: #fff; border-radius: 1px; transform: translateX(-50%); transition: left .5s; }
 </style>
 </head>
 <body>
 
-<!-- Header -->
 <div class="header">
   <div class="header-inner">
-    <div>
-      <div class="logo">Investment Pulse <span>Dashboard</span></div>
-    </div>
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div class="updated" id="lastUpdate"></div>
-      <button class="refresh-btn" onclick="location.reload()">Refresh</button>
-    </div>
+    <div class="logo">Smart Money Tracker <span>Institutional Flow Dashboard</span></div>
+    <div class="updated" id="lastUpdate"></div>
   </div>
 </div>
 
 <div class="container">
 
-  <!-- Ticker Tape -->
-  <div class="ticker-section">
-    <div class="tradingview-widget-container">
-      <div id="tv-ticker"></div>
+  <!-- Ticker tape -->
+  <div class="section" style="border-radius:10px;overflow:hidden;margin-bottom:14px;" id="tickerWrap"></div>
+
+  <!-- Smart Money Signal Cards -->
+  <div class="section">
+    <div class="section-title"><span class="dot dot-red"></span>Smart Money Signals</div>
+    <div class="grid-3" id="signalCards">
+      <div class="card" id="card-vix" onclick="open('https://www.google.com/finance/quote/VIX:INDEXCBOE','_blank')">
+        <div class="label">VIX — Fear Index</div>
+        <div class="value" id="vix-val">—</div>
+        <div class="change" id="vix-chg"></div>
+        <div class="sub">Below 20 = calm · Above 30 = fear</div>
+      </div>
+      <div class="card" id="card-dxy" onclick="open('https://www.google.com/finance/quote/DX-Y.NYB:NYBOT','_blank')">
+        <div class="label">DXY — Dollar Index</div>
+        <div class="value" id="dxy-val">—</div>
+        <div class="change" id="dxy-chg"></div>
+        <div class="sub">Rising = risk-off pressure</div>
+      </div>
+      <div class="card" id="card-tnx" onclick="open('https://www.google.com/finance/quote/TNX:INDEXCBOE','_blank')">
+        <div class="label">US 10Y Yield</div>
+        <div class="value" id="tnx-val">—</div>
+        <div class="change" id="tnx-chg"></div>
+        <div class="sub">High yield = bonds compete w/ stocks</div>
+      </div>
+      <div class="card">
+        <div class="label">Fear &amp; Greed Index</div>
+        <div class="fg-wrap">
+          <div class="fg-score" id="fg-score">—</div>
+          <div class="fg-label" id="fg-label">Loading…</div>
+          <div class="fg-bar"><div class="fg-needle" id="fg-needle" style="left:50%"></div></div>
+        </div>
+        <div class="sub" style="margin-top:6px;">CNN Money · 0=Fear · 100=Greed</div>
+      </div>
+      <div class="card" onclick="open('https://www.coingecko.com/en/global-charts','_blank')">
+        <div class="label">BTC Dominance</div>
+        <div class="value" id="btc-dom">—</div>
+        <div class="change" id="btc-dom-chg"></div>
+        <div class="sub">Rising = risk-off in crypto</div>
+      </div>
+      <div class="card" onclick="open('https://www.google.com/finance/quote/GC=F:NYMEX','_blank')">
+        <div class="label">Gold (XAU/USD)</div>
+        <div class="value" id="gold-val">—</div>
+        <div class="change" id="gold-chg"></div>
+        <div class="sub">Safe-haven institutional demand</div>
+      </div>
     </div>
   </div>
 
-  <!-- Quick Prices -->
+  <!-- ETF Flow Tracker -->
   <div class="section">
-    <div class="section-title"><span class="dot dot-gold"></span>Key Prices</div>
-    <div class="grid grid-3" id="priceCards">
-      <div class="loading"><div class="spinner"></div>Loading prices...</div>
+    <div class="section-title"><span class="dot dot-blue"></span>ETF Flow Tracker — Where Is Money Rotating?</div>
+    <div class="widget" style="overflow-x:auto;">
+      <table class="flow-table" id="flowTable">
+        <thead>
+          <tr>
+            <th>ETF</th><th>Category</th><th>Price</th><th>1-Day</th><th>Signal</th><th>Relative Strength</th>
+          </tr>
+        </thead>
+        <tbody id="flowBody">
+          <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted);">Loading flows…</td></tr>
+        </tbody>
+      </table>
     </div>
+  </div>
+
+  <!-- Sector Heatmap -->
+  <div class="section">
+    <div class="section-title"><span class="dot dot-green"></span>S&amp;P 500 Sector Heatmap</div>
+    <div class="widget" style="height:420px;" id="heatmapWrap"></div>
   </div>
 
   <!-- Market Overview Chart -->
   <div class="section">
-    <div class="section-title"><span class="dot dot-blue"></span>Market Overview</div>
-    <div class="tabs" id="chartTabs">
-      <div class="tab active" data-chart="stocks">US Stocks</div>
-      <div class="tab" data-chart="crypto">Crypto</div>
-      <div class="tab" data-chart="commodities">Commodities</div>
-      <div class="tab" data-chart="singapore">Singapore</div>
-    </div>
-    <div id="chartArea">
-      <div class="widget-container" id="mainChart" style="height:420px;"></div>
-    </div>
-  </div>
-
-  <!-- Watchlist: AI Stocks -->
-  <div class="section">
-    <div class="section-title"><span class="dot dot-green"></span>AI & Tech Stocks</div>
-    <div class="widget-container" id="aiStockList" style="height:380px;"></div>
-  </div>
-
-  <!-- Watchlist: SaaS Stocks -->
-  <div class="section">
-    <div class="section-title"><span class="dot dot-blue"></span>SaaS & Cloud Stocks</div>
-    <div class="widget-container" id="saasStockList" style="height:340px;"></div>
-  </div>
-
-  <!-- Crypto Focus -->
-  <div class="section">
-    <div class="section-title"><span class="dot dot-blue"></span>Crypto — USDC / Circle Focus</div>
-    <div class="widget-container" id="cryptoWidget" style="height:380px;"></div>
-  </div>
-
-  <!-- Singapore Market -->
-  <div class="section">
-    <div class="section-title"><span class="dot dot-green"></span>Singapore Market (STI)</div>
-    <div class="widget-container" id="stiChart" style="height:400px;"></div>
-  </div>
-
-  <!-- Smart Money / Institutional Flow -->
-  <div class="section">
-    <div class="section-title"><span class="dot dot-red"></span>Smart Money & Institutional Indicators</div>
-    <div class="grid grid-2" id="smartMoneyCards">
-      <div class="price-card" style="cursor:pointer" onclick="window.open('https://www.google.com/finance/quote/VIX:INDEXCBOE','_blank')">
-        <div class="label">VIX — Fear Index</div>
-        <div class="value" id="vixValue">—</div>
-        <div class="sub">Low = complacency, High = fear · <span style="color:var(--accent)">Google Finance →</span></div>
-      </div>
-      <div class="price-card" style="cursor:pointer" onclick="window.open('https://www.google.com/finance/quote/TNX:INDEXCBOE','_blank')">
-        <div class="label">US 10Y Treasury Yield</div>
-        <div class="value" id="us10yValue">—</div>
-        <div class="sub">Rising yield = risk-off rotation · <span style="color:var(--accent)">Google Finance →</span></div>
-      </div>
-      <div class="price-card" style="cursor:pointer" onclick="window.open('https://www.google.com/finance/quote/DX-Y.NYB:NYBOT','_blank')">
-        <div class="label">DXY — US Dollar Index</div>
-        <div class="value" id="dxyValue">—</div>
-        <div class="sub">Strong dollar = pressure on commodities · <span style="color:var(--accent)">Google Finance →</span></div>
-      </div>
-      <div class="price-card" style="cursor:pointer" onclick="window.open('https://www.google.com/finance/quote/.INX:INDEXSP','_blank')">
-        <div class="label">Put/Call Ratio (CBOE)</div>
-        <div class="value" id="pcrValue">—</div>
-        <div class="sub">&gt;1 = bearish sentiment, &lt;0.7 = bullish · <span style="color:var(--accent)">Google Finance →</span></div>
-      </div>
-    </div>
-    <div class="widget-container" id="heatmapWidget" style="height:420px; margin-top: 12px;"></div>
-  </div>
-
-  <!-- News & Headlines -->
-  <div class="section">
-    <div class="section-title"><span class="dot dot-gold"></span>Market News & Headlines</div>
-    <div class="widget-container" id="newsWidget" style="height:500px;"></div>
+    <div class="section-title"><span class="dot dot-gold"></span>Market Overview — Indices</div>
+    <div class="widget" style="height:380px;" id="chartWrap"></div>
   </div>
 
   <!-- Economic Calendar -->
   <div class="section">
     <div class="section-title"><span class="dot dot-red"></span>Economic Calendar</div>
-    <div class="widget-container" id="calendarWidget" style="height:400px;"></div>
+    <div class="widget" style="height:380px;" id="calWrap"></div>
   </div>
 
 </div>
 
 <div class="footer">
-  Investment Pulse — Prices via <a href="https://www.google.com/finance/" target="_blank" style="color:var(--accent);text-decoration:none;">Google Finance</a> &amp; CoinGecko. Charts by TradingView. For informational purposes only, not financial advice.<br>
-  <span style="margin-top:4px;display:inline-block;">Add to Home Screen on your phone for app-like access.</span>
+  Smart Money Tracker — Data: Yahoo Finance · CoinGecko · alternative.me · Charts: TradingView · For informational purposes only, not financial advice.
 </div>
 
-<!-- TradingView Widget Library -->
-<script src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async></script>
-<script src="https://s3.tradingview.com/tv.js"></script>
-
 <script>
-// --- Timestamp ---
-document.getElementById('lastUpdate').textContent = 'Updated: ' + new Date().toLocaleString();
+document.getElementById('lastUpdate').textContent = 'Updated: ' + new Date().toLocaleTimeString();
 
-// --- Ticker Tape ---
-(function() {
-  const el = document.getElementById('tv-ticker');
-  const script = document.createElement('script');
-  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js';
-  script.async = true;
-  script.textContent = JSON.stringify({
-    symbols: [
-      { proName: "FOREXCOM:XAUUSD", title: "Gold" },
-      { proName: "FOREXCOM:XAGUSD", title: "Silver" },
-      { proName: "NYMEX:CL1!", title: "Crude Oil" },
-      { proName: "BITSTAMP:BTCUSD", title: "Bitcoin" },
-      { proName: "CRYPTO:USDCUSD", title: "USDC" },
-      { proName: "NASDAQ:NVDA", title: "NVIDIA" },
-      { proName: "NASDAQ:MSFT", title: "Microsoft" },
-      { proName: "NYSE:CRCL", title: "Circle (IPO)" },
-      { proName: "SP:SPX", title: "S&P 500" },
-      { proName: "TVC:STI", title: "SGX STI" },
-      { proName: "TVC:DXY", title: "US Dollar" },
-      { proName: "TVC:VIX", title: "VIX" }
-    ],
-    showSymbolLogo: true,
-    colorTheme: "dark",
-    isTransparent: true,
-    displayMode: "adaptive",
-    locale: "en"
-  });
-  el.appendChild(script);
-})();
-
-// --- Price Cards (Google Finance sourced) ---
-const priceAssets = [
-  { label: 'Gold (XAU/USD)', gfSlug: 'XAU-USD', cgId: null, type: 'commodity' },
-  { label: 'Silver (XAG/USD)', gfSlug: 'XAG-USD', cgId: null, type: 'commodity' },
-  { label: 'Crude Oil (WTI)', gfSlug: 'CL=F:NYMEX', cgId: null, type: 'commodity' },
-  { label: 'Bitcoin (BTC)', gfSlug: 'BTC-USD', cgId: 'bitcoin', type: 'crypto' },
-  { label: 'Ethereum (ETH)', gfSlug: 'ETH-USD', cgId: 'ethereum', type: 'crypto' },
-  { label: 'USDC', gfSlug: 'USDC-USD', cgId: 'usd-coin', type: 'crypto' },
-  { label: 'Solana (SOL)', gfSlug: 'SOL-USD', cgId: 'solana', type: 'crypto' },
-  { label: 'S&P 500', gfSlug: '.INX:INDEXSP', cgId: null, type: 'index' },
-  { label: 'NVIDIA', gfSlug: 'NVDA:NASDAQ', cgId: null, type: 'stock' },
-  { label: 'Microsoft', gfSlug: 'MSFT:NASDAQ', cgId: null, type: 'stock' },
-  { label: 'Palantir', gfSlug: 'PLTR:NYSE', cgId: null, type: 'stock' },
-  { label: 'SGX STI', gfSlug: 'STI:INDEXSG', cgId: null, type: 'index' },
-];
-
-function googleFinanceUrl(slug) {
-  return `https://www.google.com/finance/quote/${slug}`;
-}
-
-function renderPriceCards(data) {
-  const container = document.getElementById('priceCards');
-  container.innerHTML = '';
-  priceAssets.forEach(asset => {
-    const d = data[asset.cgId] || data[asset.gfSlug] || null;
-    const div = document.createElement('div');
-    div.className = 'price-card';
-    div.style.cursor = 'pointer';
-    div.onclick = () => window.open(googleFinanceUrl(asset.gfSlug), '_blank');
-    if (d) {
-      const changeClass = d.change >= 0 ? 'up' : 'down';
-      const arrow = d.change >= 0 ? '▲' : '▼';
-      div.innerHTML = `<div class="label">${asset.label}</div>
-        <div class="value">$${d.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-        <div class="change ${changeClass}">${arrow} ${d.change >= 0 ? '+' : ''}${d.change.toFixed(2)}%</div>
-        <div class="sub">via Google Finance</div>`;
-    } else {
-      div.innerHTML = `<div class="label">${asset.label}</div>
-        <div class="value" style="font-size:14px;color:var(--accent);">View on Google Finance →</div>
-        <div class="sub">Click to see live price</div>`;
-    }
-    container.appendChild(div);
-  });
-}
-
-// Fetch crypto prices from CoinGecko (free, no CORS)
-async function fetchCryptoPrices() {
-  const ids = priceAssets.filter(a => a.cgId).map(a => a.cgId).join(',');
-  try {
-    const resp = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`);
-    const json = await resp.json();
-    const out = {};
-    for (const [id, val] of Object.entries(json)) {
-      out[id] = { price: val.usd, change: val.usd_24h_change || 0 };
-    }
-    return out;
-  } catch (e) {
-    console.warn('CoinGecko fetch failed:', e);
-    return {};
-  }
-}
-
-// Fetch stock/commodity prices from Yahoo Finance via CORS proxy
-async function fetchYahooPrices() {
-  const symbols = ['GC=F', 'SI=F', 'CL=F', '^GSPC', 'NVDA', 'MSFT', 'PLTR', '^STI'];
-  const slugMap = {
-    'GC=F': 'XAU-USD', 'SI=F': 'XAG-USD', 'CL=F': 'CL=F:NYMEX',
-    '^GSPC': '.INX:INDEXSP', 'NVDA': 'NVDA:NASDAQ', 'MSFT': 'MSFT:NASDAQ',
-    'PLTR': 'PLTR:NYSE', '^STI': 'STI:INDEXSG'
-  };
-  const yahooUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols.join(',')}`;
-  const proxyUrls = [
-    `https://corsproxy.io/?url=${encodeURIComponent(yahooUrl)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`,
-    yahooUrl
-  ];
-  for (const url of proxyUrls) {
-    try {
-      const resp = await fetch(url);
-      if (!resp.ok) continue;
-      const json = await resp.json();
-      const out = {};
-      if (json.quoteResponse && json.quoteResponse.result) {
-        json.quoteResponse.result.forEach(q => {
-          const slug = slugMap[q.symbol];
-          if (slug) {
-            out[slug] = {
-              price: q.regularMarketPrice || 0,
-              change: q.regularMarketChangePercent || 0
-            };
-          }
-        });
-      }
-      if (Object.keys(out).length > 0) return out;
-    } catch (e) {
-      console.warn(`Yahoo fetch via ${url.substring(0, 40)}... failed:`, e);
-    }
-  }
-  return {};
-}
-
-// Load all prices
-async function loadAllPrices() {
-  const [crypto, stocks] = await Promise.all([fetchCryptoPrices(), fetchYahooPrices()]);
-  renderPriceCards({ ...crypto, ...stocks });
-}
-loadAllPrices();
-// Auto-refresh every 2 minutes
-setInterval(loadAllPrices, 120000);
-
-// --- Main Chart (Tabbed) ---
-const chartConfigs = {
-  stocks: {
-    symbols: [["S&P 500", "SP:SPX|1D"], ["NASDAQ", "NASDAQ:NDX|1D"], ["Dow Jones", "DJ:DJI|1D"]],
-    title: "US Stock Indices"
-  },
-  crypto: {
-    symbols: [["Bitcoin", "BITSTAMP:BTCUSD|1D"], ["Ethereum", "BITSTAMP:ETHUSD|1D"], ["USDC/USD", "CRYPTO:USDCUSD|1D"]],
-    title: "Cryptocurrency"
-  },
-  commodities: {
-    symbols: [["Gold", "TVC:GOLD|1D"], ["Silver", "TVC:SILVER|1D"], ["Crude Oil", "TVC:USOIL|1D"]],
-    title: "Commodities"
-  },
-  singapore: {
-    symbols: [["Straits Times", "SGX:STI|1D"], ["SGD/USD", "FX:SGDUSD|1D"]],
-    title: "Singapore"
-  }
-};
-
-function loadChart(key) {
-  const cfg = chartConfigs[key];
-  const el = document.getElementById('mainChart');
-  el.innerHTML = '';
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function tvWidget(container, scriptSrc, config) {
   const s = document.createElement('script');
-  s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js';
+  s.src = scriptSrc;
   s.async = true;
-  s.textContent = JSON.stringify({
-    symbols: cfg.symbols,
-    chartOnly: false,
-    width: "100%",
-    height: "100%",
-    locale: "en",
-    colorTheme: "dark",
-    autosize: true,
-    showVolume: true,
-    showMA: true,
-    hideDateRanges: false,
-    hideMarketStatus: false,
-    hideSymbolLogo: false,
-    scalePosition: "right",
-    scaleMode: "Normal",
-    fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
-    fontSize: "10",
-    noTimeScale: false,
-    valuesTracking: "1",
-    changeMode: "price-and-percent",
-    chartType: "area",
-    lineWidth: 2,
-    lineType: 0,
-    dateRanges: ["1d|1", "1m|30", "3m|60", "12m|1D", "60m|1W", "all|1M"]
-  });
-  el.appendChild(s);
+  s.textContent = JSON.stringify(config);
+  container.appendChild(s);
 }
 
-document.getElementById('chartTabs').addEventListener('click', (e) => {
-  if (!e.target.classList.contains('tab')) return;
-  document.querySelectorAll('#chartTabs .tab').forEach(t => t.classList.remove('active'));
-  e.target.classList.add('active');
-  loadChart(e.target.dataset.chart);
+function setCard(valId, chgId, price, chgPct) {
+  document.getElementById(valId).textContent = price;
+  const el = document.getElementById(chgId);
+  if (!el) return;
+  const up = chgPct >= 0;
+  el.textContent = (up ? '▲ +' : '▼ ') + chgPct.toFixed(2) + '%';
+  el.className = 'change ' + (up ? 'up' : 'down');
+}
+
+async function fetchWithProxy(url) {
+  const proxies = [
+    `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    url
+  ];
+  for (const p of proxies) {
+    try {
+      const r = await fetch(p);
+      if (r.ok) return r.json();
+    } catch {}
+  }
+  return null;
+}
+
+// ── Ticker Tape ──────────────────────────────────────────────────────────────
+tvWidget(document.getElementById('tickerWrap'),
+  'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js', {
+  symbols: [
+    { proName: 'SP:SPX', title: 'S&P 500' },
+    { proName: 'NASDAQ:NDX', title: 'Nasdaq' },
+    { proName: 'TVC:DXY', title: 'DXY' },
+    { proName: 'TVC:VIX', title: 'VIX' },
+    { proName: 'TVC:GOLD', title: 'Gold' },
+    { proName: 'BITSTAMP:BTCUSD', title: 'Bitcoin' },
+    { proName: 'CBOT:ZB1!', title: 'T-Bond' },
+    { proName: 'NYMEX:CL1!', title: 'Crude Oil' }
+  ],
+  showSymbolLogo: true, colorTheme: 'dark', isTransparent: true, displayMode: 'adaptive', locale: 'en'
 });
-loadChart('stocks');
 
-// --- AI Stocks Watchlist ---
-(function() {
-  const el = document.getElementById('aiStockList');
-  const s = document.createElement('script');
-  s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js';
-  s.async = true;
-  s.textContent = JSON.stringify({
-    width: "100%",
-    height: "100%",
-    symbolsGroups: [{
-      name: "AI & Tech",
-      symbols: [
-        { name: "NASDAQ:NVDA", displayName: "NVIDIA" },
-        { name: "NASDAQ:MSFT", displayName: "Microsoft" },
-        { name: "NASDAQ:GOOGL", displayName: "Alphabet" },
-        { name: "NASDAQ:META", displayName: "Meta" },
-        { name: "NASDAQ:AMD", displayName: "AMD" },
-        { name: "NASDAQ:AMZN", displayName: "Amazon" },
-        { name: "NASDAQ:AAPL", displayName: "Apple" },
-        { name: "NYSE:PLTR", displayName: "Palantir" },
-        { name: "NYSE:AI", displayName: "C3.ai" },
-        { name: "NASDAQ:SMCI", displayName: "Super Micro" },
-        { name: "NYSE:TSM", displayName: "TSMC" }
-      ]
-    }],
-    showSymbolLogo: true,
-    colorTheme: "dark",
-    isTransparent: true,
-    locale: "en"
-  });
-  el.appendChild(s);
-})();
-
-// --- SaaS Stocks ---
-(function() {
-  const el = document.getElementById('saasStockList');
-  const s = document.createElement('script');
-  s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js';
-  s.async = true;
-  s.textContent = JSON.stringify({
-    width: "100%",
-    height: "100%",
-    symbolsGroups: [{
-      name: "SaaS & Cloud",
-      symbols: [
-        { name: "NYSE:CRM", displayName: "Salesforce" },
-        { name: "NYSE:NOW", displayName: "ServiceNow" },
-        { name: "NASDAQ:ADBE", displayName: "Adobe" },
-        { name: "NYSE:SNOW", displayName: "Snowflake" },
-        { name: "NASDAQ:DDOG", displayName: "Datadog" },
-        { name: "NYSE:NET", displayName: "Cloudflare" },
-        { name: "NASDAQ:CRWD", displayName: "CrowdStrike" },
-        { name: "NASDAQ:ZS", displayName: "Zscaler" },
-        { name: "NYSE:MDB", displayName: "MongoDB" }
-      ]
-    }],
-    showSymbolLogo: true,
-    colorTheme: "dark",
-    isTransparent: true,
-    locale: "en"
-  });
-  el.appendChild(s);
-})();
-
-// --- Crypto Widget ---
-(function() {
-  const el = document.getElementById('cryptoWidget');
-  const s = document.createElement('script');
-  s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js';
-  s.async = true;
-  s.textContent = JSON.stringify({
-    width: "100%",
-    height: "100%",
-    symbolsGroups: [{
-      name: "Crypto",
-      symbols: [
-        { name: "BITSTAMP:BTCUSD", displayName: "Bitcoin" },
-        { name: "BITSTAMP:ETHUSD", displayName: "Ethereum" },
-        { name: "CRYPTO:USDCUSD", displayName: "USDC" },
-        { name: "BINANCE:SOLUSDT", displayName: "Solana" },
-        { name: "COINBASE:XRPUSD", displayName: "XRP" },
-        { name: "BINANCE:AVAXUSDT", displayName: "Avalanche" }
-      ]
-    }],
-    showSymbolLogo: true,
-    colorTheme: "dark",
-    isTransparent: true,
-    locale: "en"
-  });
-  el.appendChild(s);
-})();
-
-// --- Singapore STI Chart ---
-(function() {
-  const el = document.getElementById('stiChart');
-  const s = document.createElement('script');
-  s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-  s.async = true;
-  s.textContent = JSON.stringify({
-    autosize: true,
-    symbol: "SGX:STI",
-    interval: "D",
-    timezone: "Asia/Singapore",
-    theme: "dark",
-    style: "1",
-    locale: "en",
-    allow_symbol_change: true,
-    support_host: "https://www.tradingview.com",
-    hide_side_toolbar: false,
-    studies: ["STD;SMA"],
-    width: "100%",
-    height: "100%"
-  });
-  el.appendChild(s);
-})();
-
-// --- Heatmap (S&P 500 stocks) ---
-(function() {
-  const el = document.getElementById('heatmapWidget');
-  const s = document.createElement('script');
-  s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-stock-heatmap.js';
-  s.async = true;
-  s.textContent = JSON.stringify({
-    exchanges: [],
-    dataSource: "SPX500",
-    grouping: "sector",
-    blockSize: "market_cap_basic",
-    blockColor: "change",
-    locale: "en",
-    symbolUrl: "",
-    colorTheme: "dark",
-    hasTopBar: true,
-    isDataSetEnabled: true,
-    isZoomEnabled: true,
-    hasSymbolTooltip: true,
-    width: "100%",
-    height: "100%"
-  });
-  el.appendChild(s);
-})();
-
-// --- News (TradingView Timeline) ---
-(function() {
-  const el = document.getElementById('newsWidget');
-  const s = document.createElement('script');
-  s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-timeline.js';
-  s.async = true;
-  s.textContent = JSON.stringify({
-    feedMode: "all_symbols",
-    isTransparent: true,
-    displayMode: "regular",
-    width: "100%",
-    height: "100%",
-    colorTheme: "dark",
-    locale: "en",
-    market: "stock"
-  });
-  el.appendChild(s);
-})();
-
-// --- Economic Calendar ---
-(function() {
-  const el = document.getElementById('calendarWidget');
-  const s = document.createElement('script');
-  s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-events.js';
-  s.async = true;
-  s.textContent = JSON.stringify({
-    colorTheme: "dark",
-    isTransparent: true,
-    width: "100%",
-    height: "100%",
-    locale: "en",
-    importanceFilter: "0,1",
-    countryFilter: "us,sg,cn"
-  });
-  el.appendChild(s);
-})();
-
-// --- Smart Money: Fetch VIX, DXY, US10Y from Yahoo Finance via CORS proxy ---
-async function fetchSmartMoney() {
-  const symbols = ['^VIX', '^TNX', 'DX-Y.NYB'];
-  const elMap = { '^VIX': 'vixValue', '^TNX': 'us10yValue', 'DX-Y.NYB': 'dxyValue' };
-  const yahooUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols.join(',')}`;
-  const proxyUrls = [
-    `https://corsproxy.io/?url=${encodeURIComponent(yahooUrl)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`,
-    yahooUrl
-  ];
-  for (const url of proxyUrls) {
-    try {
-      const resp = await fetch(url);
-      if (!resp.ok) continue;
-      const json = await resp.json();
-      if (json.quoteResponse && json.quoteResponse.result) {
-        json.quoteResponse.result.forEach(q => {
-          const el = document.getElementById(elMap[q.symbol]);
-          if (el && q.regularMarketPrice != null) {
-            el.textContent = q.regularMarketPrice.toFixed(2);
-            el.style.color = q.regularMarketChangePercent >= 0 ? 'var(--green)' : 'var(--red)';
-          }
-        });
-        return;
+// ── Smart Money Signal Cards ─────────────────────────────────────────────────
+async function loadSignals() {
+  const yahooUrl = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=^VIX,^TNX,DX-Y.NYB,GC=F';
+  const data = await fetchWithProxy(yahooUrl);
+  if (data?.quoteResponse?.result) {
+    data.quoteResponse.result.forEach(q => {
+      const p = q.regularMarketPrice ?? 0;
+      const c = q.regularMarketChangePercent ?? 0;
+      if (q.symbol === '^VIX')     setCard('vix-val', 'vix-chg', p.toFixed(2), c);
+      if (q.symbol === '^TNX')     setCard('tnx-val', 'tnx-chg', p.toFixed(2) + '%', c);
+      if (q.symbol === 'DX-Y.NYB') setCard('dxy-val', 'dxy-chg', p.toFixed(2), c);
+      if (q.symbol === 'GC=F') {
+        const fmt = '$' + p.toLocaleString('en', {minimumFractionDigits:0, maximumFractionDigits:0});
+        setCard('gold-val', 'gold-chg', fmt, c);
       }
-    } catch (e) {
-      console.warn(`Smart money fetch via ${url.substring(0, 40)}... failed:`, e);
-    }
-  }
-}
-fetchSmartMoney();
-
-// --- PWA: Add to Home Screen ---
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  const banner = document.querySelector('.install-banner');
-  if (banner) {
-    banner.classList.add('show');
-    banner.addEventListener('click', () => {
-      deferredPrompt.prompt();
-      banner.classList.remove('show');
     });
   }
-});
-</script>
+}
 
+// ── Fear & Greed ─────────────────────────────────────────────────────────────
+async function loadFearGreed() {
+  try {
+    const r = await fetch('https://api.alternative.me/fng/?limit=1');
+    const j = await r.json();
+    const val = +j.data[0].value;
+    const label = j.data[0].value_classification;
+    document.getElementById('fg-score').textContent = val;
+    const scoreEl = document.getElementById('fg-score');
+    scoreEl.style.color = val < 30 ? 'var(--red)' : val > 70 ? 'var(--green)' : 'var(--gold)';
+    document.getElementById('fg-label').textContent = label;
+    document.getElementById('fg-needle').style.left = val + '%';
+  } catch {}
+}
+
+// ── BTC Dominance ─────────────────────────────────────────────────────────────
+async function loadBTCDom() {
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/global');
+    const j = await r.json();
+    const dom = j.data.market_cap_percentage.btc.toFixed(1);
+    document.getElementById('btc-dom').textContent = dom + '%';
+    const chgEl = document.getElementById('btc-dom-chg');
+    chgEl.textContent = 'of total crypto market cap';
+    chgEl.className = 'change';
+    chgEl.style.color = 'var(--muted)';
+  } catch {}
+}
+
+// ── ETF Flow Table ───────────────────────────────────────────────────────────
+const ETFs = [
+  { sym: 'SPY',  name: 'SPDR S&P 500',      cat: 'US Equities' },
+  { sym: 'QQQ',  name: 'Invesco Nasdaq 100', cat: 'Tech / Growth' },
+  { sym: 'IWM',  name: 'iShares Russell 2000',cat: 'Small Cap' },
+  { sym: 'TLT',  name: 'iShares 20Y Treasury',cat: 'Long Bonds' },
+  { sym: 'GLD',  name: 'SPDR Gold Shares',   cat: 'Gold' },
+  { sym: 'XLE',  name: 'SPDR Energy',        cat: 'Energy' },
+  { sym: 'XLF',  name: 'SPDR Financials',    cat: 'Financials' },
+  { sym: 'XLK',  name: 'SPDR Technology',    cat: 'Technology' },
+  { sym: 'XLV',  name: 'SPDR Health Care',   cat: 'Health Care' },
+  { sym: 'IBIT', name: 'iShares Bitcoin ETF',cat: 'Crypto' },
+];
+
+async function loadETFFlows() {
+  const syms = ETFs.map(e => e.sym).join(',');
+  const data = await fetchWithProxy(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${syms}`);
+  const tbody = document.getElementById('flowBody');
+  if (!data?.quoteResponse?.result?.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--muted);">Data unavailable — click ETF symbols to view on Google Finance</td></tr>';
+    return;
+  }
+
+  const results = {};
+  data.quoteResponse.result.forEach(q => { results[q.symbol] = q; });
+
+  // Find max abs change for relative bar scaling
+  const changes = ETFs.map(e => Math.abs(results[e.sym]?.regularMarketChangePercent ?? 0));
+  const maxAbs = Math.max(...changes, 0.01);
+
+  tbody.innerHTML = ETFs.map(etf => {
+    const q = results[etf.sym];
+    const price = q ? '$' + q.regularMarketPrice.toFixed(2) : '—';
+    const chg   = q ? q.regularMarketChangePercent : null;
+    const chgTxt = chg != null ? (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%' : '—';
+    const chgCls = chg == null ? '' : chg >= 0 ? 'up' : 'down';
+    const signal = chg == null ? 'flat' : chg > 0.3 ? 'in' : chg < -0.3 ? 'out' : 'flat';
+    const badgeLabel = signal === 'in' ? '▲ Inflow' : signal === 'out' ? '▼ Outflow' : '— Flat';
+    const barWidth = chg != null ? Math.min(100, (Math.abs(chg) / maxAbs) * 100).toFixed(0) : 0;
+    const barColor = signal === 'in' ? 'var(--green)' : signal === 'out' ? 'var(--red)' : 'var(--muted)';
+    return `<tr>
+      <td><a href="https://www.google.com/finance/quote/${etf.sym}:NYSEARCA" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:600;">${etf.sym}</a><br><span style="font-size:11px;color:var(--muted)">${etf.name}</span></td>
+      <td style="color:var(--muted);font-size:12px;">${etf.cat}</td>
+      <td style="font-weight:600;">${price}</td>
+      <td class="${chgCls}" style="font-weight:600;">${chgTxt}</td>
+      <td><span class="badge badge-${signal}">${badgeLabel}</span></td>
+      <td style="min-width:80px;"><div class="flow-bar"><div class="flow-bar-fill" style="width:${barWidth}%;background:${barColor};"></div></div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── TradingView Widgets ───────────────────────────────────────────────────────
+tvWidget(document.getElementById('heatmapWrap'),
+  'https://s3.tradingview.com/external-embedding/embed-widget-stock-heatmap.js', {
+  exchanges: [], dataSource: 'SPX500', grouping: 'sector',
+  blockSize: 'market_cap_basic', blockColor: 'change',
+  locale: 'en', colorTheme: 'dark', hasTopBar: true,
+  isDataSetEnabled: true, isZoomEnabled: true, hasSymbolTooltip: true,
+  width: '100%', height: '100%'
+});
+
+tvWidget(document.getElementById('chartWrap'),
+  'https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js', {
+  symbols: [['S&P 500','SP:SPX|1D'],['Nasdaq','NASDAQ:NDX|1D'],['Gold','TVC:GOLD|1D'],['T-Bond','CBOT:ZB1!|1D']],
+  chartOnly: false, width: '100%', height: '100%', locale: 'en',
+  colorTheme: 'dark', autosize: true, showVolume: true, showMA: true,
+  chartType: 'area', lineWidth: 2, dateRanges: ['1d|1','1m|30','3m|60','12m|1D','all|1M']
+});
+
+tvWidget(document.getElementById('calWrap'),
+  'https://s3.tradingview.com/external-embedding/embed-widget-events.js', {
+  colorTheme: 'dark', isTransparent: true, width: '100%', height: '100%',
+  locale: 'en', importanceFilter: '0,1', countryFilter: 'us,cn,eu'
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+Promise.all([loadSignals(), loadFearGreed(), loadBTCDom(), loadETFFlows()]);
+setInterval(() => Promise.all([loadSignals(), loadFearGreed(), loadBTCDom(), loadETFFlows()]), 120000);
+</script>
 </body>
 </html>
