@@ -90,6 +90,35 @@
   .dot-green { background: var(--green); }
   .dot-red { background: var(--red); }
 
+  /* Earnings table */
+  .earnings-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .earnings-table th {
+    text-align: left; padding: 8px 12px;
+    color: var(--muted); font-weight: 600; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+  }
+  .earnings-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .earnings-table tr:last-child td { border-bottom: none; }
+  .earnings-table tr:hover td { background: var(--surface); }
+  .earnings-ticker { font-weight: 700; color: var(--accent); }
+  .earnings-company { color: var(--text); }
+  .earnings-date { color: var(--muted); white-space: nowrap; }
+  .earnings-time { font-size: 11px; color: var(--muted); }
+  .earnings-beat { color: var(--green); font-weight: 600; }
+  .earnings-miss { color: var(--red); font-weight: 600; }
+  .earnings-pending { color: var(--muted); font-style: italic; }
+  .earnings-nav { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+  .earnings-nav button {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); padding: 6px 14px; border-radius: 6px;
+    cursor: pointer; font-size: 13px;
+  }
+  .earnings-nav button:hover { border-color: var(--accent); color: var(--accent); }
+  .earnings-nav .date-label { font-size: 14px; font-weight: 600; flex: 1; text-align: center; }
+  .earnings-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .earnings-empty { text-align: center; padding: 30px; color: var(--muted); font-size: 13px; }
+
   /* Cards grid */
   .grid {
     display: grid;
@@ -350,6 +379,19 @@
       </div>
     </div>
     <div class="widget-container" id="heatmapWidget" style="height:420px; margin-top: 12px;"></div>
+  </div>
+
+  <!-- Earnings Calendar -->
+  <div class="section">
+    <div class="section-title"><span class="dot dot-gold"></span>Corporate Earnings Releases</div>
+    <div class="earnings-nav">
+      <button id="earningsPrev">&#8592; Prev</button>
+      <div class="date-label" id="earningsDateLabel">—</div>
+      <button id="earningsNext">Next &#8594;</button>
+    </div>
+    <div class="earnings-wrap">
+      <div id="earningsBody"><div class="earnings-empty">Loading earnings...</div></div>
+    </div>
   </div>
 
   <!-- News & Headlines -->
@@ -791,6 +833,113 @@ async function fetchSmartMoney() {
   }
 }
 fetchSmartMoney();
+
+// --- Corporate Earnings Calendar ---
+(function() {
+  let earningsDate = new Date();
+  // Skip to next weekday if weekend
+  while (earningsDate.getDay() === 0 || earningsDate.getDay() === 6) {
+    earningsDate.setDate(earningsDate.getDate() + 1);
+  }
+
+  function fmtDate(d) {
+    return d.toISOString().split('T')[0];
+  }
+  function fmtDisplay(d) {
+    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  }
+  function isWeekend(d) { return d.getDay() === 0 || d.getDay() === 6; }
+  function addDays(d, n) {
+    const x = new Date(d);
+    x.setDate(x.getDate() + n);
+    return x;
+  }
+  function nextWeekday(d, dir) {
+    let x = addDays(d, dir);
+    while (isWeekend(x)) x = addDays(x, dir);
+    return x;
+  }
+
+  async function loadEarnings(date) {
+    document.getElementById('earningsDateLabel').textContent = fmtDisplay(date);
+    document.getElementById('earningsBody').innerHTML = '<div class="earnings-empty">Loading...</div>';
+    const dateStr = fmtDate(date);
+    const url = `https://api.nasdaq.com/api/calendar/earnings?date=${dateStr}`;
+    const proxies = [
+      `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+    ];
+
+    let rows = [];
+    for (const proxy of proxies) {
+      try {
+        const resp = await fetch(proxy, { headers: { 'Accept': 'application/json' } });
+        if (!resp.ok) continue;
+        const json = await resp.json();
+        const data = json?.data?.rows || json?.data?.earnings?.rows || [];
+        if (data.length > 0) { rows = data; break; }
+      } catch (e) { console.warn('Earnings fetch failed:', e); }
+    }
+
+    const body = document.getElementById('earningsBody');
+    if (!rows.length) {
+      body.innerHTML = '<div class="earnings-empty">No earnings data available for this date. Try another day.</div>';
+      return;
+    }
+
+    // Sort by market cap indicator (eps estimate magnitude) descending
+    rows.sort((a, b) => {
+      const ae = parseFloat(a.epsForecast) || 0;
+      const be = parseFloat(b.epsForecast) || 0;
+      return Math.abs(be) - Math.abs(ae);
+    });
+
+    const tableRows = rows.slice(0, 40).map(r => {
+      const ticker = r.symbol || r.ticker || '—';
+      const company = r.name || r.companyName || '—';
+      const time = r.time || r.marketTime || '';
+      const epsEst = r.epsForecast != null ? `$${parseFloat(r.epsForecast).toFixed(2)}` : '—';
+      const epsAct = r.eps != null && r.eps !== '' ? parseFloat(r.eps).toFixed(2) : null;
+
+      let epsActCell = '<span class="earnings-pending">Pending</span>';
+      if (epsAct !== null) {
+        const beat = parseFloat(epsAct) >= parseFloat(r.epsForecast || epsAct);
+        epsActCell = `<span class="${beat ? 'earnings-beat' : 'earnings-miss'}">$${epsAct} ${beat ? '▲ Beat' : '▼ Miss'}</span>`;
+      }
+
+      const timeLabel = time.toLowerCase().includes('before') ? '🌅 Pre-market'
+        : time.toLowerCase().includes('after') ? '🌙 After-hours'
+        : time || '—';
+
+      const gfUrl = `https://www.google.com/finance/quote/${ticker}:NASDAQ`;
+      return `<tr>
+        <td><a href="${gfUrl}" target="_blank" class="earnings-ticker">${ticker}</a></td>
+        <td class="earnings-company">${company}</td>
+        <td class="earnings-time">${timeLabel}</td>
+        <td>${epsEst}</td>
+        <td>${epsActCell}</td>
+      </tr>`;
+    }).join('');
+
+    body.innerHTML = `<table class="earnings-table">
+      <thead><tr>
+        <th>Ticker</th><th>Company</th><th>Time</th><th>EPS Est.</th><th>EPS Actual</th>
+      </tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table>`;
+  }
+
+  document.getElementById('earningsPrev').onclick = () => {
+    earningsDate = nextWeekday(earningsDate, -1);
+    loadEarnings(earningsDate);
+  };
+  document.getElementById('earningsNext').onclick = () => {
+    earningsDate = nextWeekday(earningsDate, 1);
+    loadEarnings(earningsDate);
+  };
+
+  loadEarnings(earningsDate);
+})();
 
 // --- PWA: Add to Home Screen ---
 let deferredPrompt;
